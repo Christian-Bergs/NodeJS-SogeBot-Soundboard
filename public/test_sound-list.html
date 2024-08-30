@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sound List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .sound-item {
+      margin-bottom: 15px;
+    }
+    .volume-slider {
+      width: 100px;
+    }
+    .global-volume-container {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Available Sounds</h1>
+  <div class="global-volume-container">
+    <label for="global-volume">Global Volume: </label>
+    <input type="range" id="global-volume" class="volume-slider" min="0" max="1" step="0.01" value="1">
+  </div>
+  <div id="sound-list"></div>
+  <script>
+    let globalVolume = 1.0;
+
+    // Update globalVolume when the slider changes
+    document.getElementById('global-volume').addEventListener('input', function(event) {
+      globalVolume = event.target.value;
+      console.log(`Global volume set to: ${globalVolume}`);
+    });
+
+    // Function to play sound via API request with global volume
+    function playSound(sound) {
+      fetch(`/api/play-sound?sound=${sound}&volume=${globalVolume}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          console.log(`Playing sound: ${sound} with volume: ${globalVolume}`);
+        })
+        .catch(error => console.error('There was a problem with the fetch operation:', error));
+    }
+
+    // Fetch the list of sounds and create buttons
+    fetch('/api/sounds')
+      .then(response => response.json())
+      .then(sounds => {
+        const soundListDiv = document.getElementById('sound-list');
+        sounds.forEach(sound => {
+          const soundItemDiv = document.createElement('div');
+          soundItemDiv.className = 'sound-item';
+          soundItemDiv.innerHTML = `
+            <span>${sound}</span>
+            <button onclick="playSound('${sound}')">Play</button>
+          `;
+          soundListDiv.appendChild(soundItemDiv);
+        });
+      })
+      .catch(error => console.error('Error fetching sound files:', error));
+  </script>
+</body>
+</html>

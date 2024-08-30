@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soundboard Overlay</title>
+</head>
+<body>
+  <script>
+    const ws = new WebSocket(`wss://${location.host}`);
+    let currentlyPlaying = null;
+    
+    function loadSounds() {
+      fetch('/api/sounds')
+        .then(response => response.json())
+        .then(sounds => {
+          // Remove existing audio elements
+          document.querySelectorAll('audio').forEach(audio => audio.remove());
+    
+          // Create new audio elements for each sound file
+          sounds.forEach(sound => {
+            const audio = document.createElement('audio');
+            audio.id = sound;
+            audio.src = `sounds/${sound}`;
+            document.body.appendChild(audio);
+          });
+        })
+        .catch(error => console.error('Error fetching sound files:', error));
+    }
+    
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.action === 'playSound') {
+        const audioElement = document.getElementById(message.sound);
+        if (audioElement) {
+          if (currentlyPlaying) {
+            currentlyPlaying.pause();
+            currentlyPlaying.currentTime = 0; // Reset the sound to the beginning
+          }
+          currentlyPlaying = audioElement;
+          audioElement.volume = message.volume !== undefined ? message.volume : 1.0; // Set the volume or default to 1.0
+          audioElement.play();
+          audioElement.onended = () => {
+            currentlyPlaying = null;
+          };
+        }
+      }
+    };
+    
+    ws.onopen = () => {
+      console.log('WebSocket connection established');
+      setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ action: 'keepAlive' }));
+        }
+      }, 30000); // Send KeepAlive message every 30 seconds
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+    
+    // Load sounds initially
+    loadSounds();
+    
+    // Reload sounds every 120 seconds (120000 milliseconds)
+    setInterval(loadSounds, 120000);
+  </script>
+</body>
+</html>
