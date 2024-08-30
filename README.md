@@ -22,3 +22,8 @@ In .env you can change some setting for the HTTP Server.
 Main Address to insert Website Source for OBS Studio:
 Address: http://localhost:3000 [<strong>This Website played the triggert Sounds !!!!</strong>]
 Soundfile List: http://localhost:3000/sound-list.html
+
+
+MP sample files can be inserted in the /public/sounds folder.
+
+These are then automatically recognized by the script and added to the API in the background. 
